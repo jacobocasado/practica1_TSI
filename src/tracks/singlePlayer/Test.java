@@ -30,6 +30,8 @@ public class Test {
         String sampleRHEAController = "tracks.singlePlayer.advanced.sampleRHEA.Agent";
 		String sampleOLETSController = "tracks.singlePlayer.advanced.olets.Agent";
 
+		String myController = "src_Casado_deGracia_Jacobo.Agent";
+
 		//Load available games
 		String spGamesCollection =  "examples/all_games_sp.csv";
 		String[][] games = Utils.readGames(spGamesCollection);
