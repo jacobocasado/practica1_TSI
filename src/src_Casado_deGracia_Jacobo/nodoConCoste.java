@@ -24,8 +24,6 @@ public class nodoConCoste {
     float h;
 
 
-
-
     public nodoConCoste(Vector2d posJugador, Vector2d orientacion) {
         this.nodoPadre = null;
         this.g = 0;
@@ -34,15 +32,20 @@ public class nodoConCoste {
         this.accion = null;
     }
 
-    public nodoConCoste(nodoConCoste nodoPadre, int g, Types.ACTIONS accion) {
+    public nodoConCoste(nodoConCoste nodoPadre, Types.ACTIONS accion) {
+
+        if (nodoPadre.accion != accion)
+            this.orientacionJugador = recalcularOrientacion(accion);
+
         this.nodoPadre = nodoPadre;
-        this.g = g;
-        this.posJugador = nodoPadre.posJugador;
+        this.posJugador = calcularNuevaPosicion();
         this.accion = accion;
+        this.g = nodoPadre.g+1;
+
     }
 
     // Metodo que devuelve un enumerado llamado orientacion a partir de un vector2d de la orientacion del juego.
-    public orientation getOrientation (Vector2d vectorOrientacion){
+    private orientation getOrientation (Vector2d vectorOrientacion){
 
         orientation orientacionJugador = null;
 
@@ -58,7 +61,20 @@ public class nodoConCoste {
         return orientacionJugador;
     }
 
+    private orientation recalcularOrientacion(Types.ACTIONS accion){
 
+        orientation orientacionNueva;
+
+        switch(accion){
+            case (Types.ACTIONS.ACTION_UP):
+                orientacionNueva = orientation.ARRIBA;
+
+
+
+        }
+
+        return orientacionNueva;
+    }
 }
 
 
