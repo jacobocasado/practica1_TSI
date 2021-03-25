@@ -27,9 +27,15 @@ public class Agent extends AbstractPlayer {
         pos_Portal.x = Math.floor(pos_Portal.x / fescala.x);
         pos_Portal.y = Math.floor(pos_Portal.y / fescala.y);
 
-        // 3. Comprobamos si no hay gemas ni enemigos, en ese caso, ejecutamos el agente.
-        if (stateObs.getResourcesPositions() == null && stateObs.getNPCPositions() == null)
-            System.out.println("Estoy en lvl 1.");
+        // Calculamos la posición del agente al principio del problema.
+        Vector2d posInicial =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
+                stateObs.getAvatarPosition().y / fescala.y);
+
+        // AGENTE NIVEL 1. NO HAY GEMAS NI ENEMIGOS. ADEMÁS DE ESO, COMO EL ENTORNO NO VARÍA, PODEMOS LANZARLO DESDE AQUI.
+        if (stateObs.getResourcesPositions() == null && stateObs.getNPCPositions() == null){
+            nivel = 1; // Nivel 1.
+            nodoConCoste nodoPadre = new nodoConCoste(posInicial, stateObs.getAvatarOrientation(), pos_Portal, stateObs);
+        }
 
     }
 
