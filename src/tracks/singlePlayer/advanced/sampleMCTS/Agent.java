@@ -2,6 +2,7 @@ package tracks.singlePlayer.advanced.sampleMCTS;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Stack;
 
 import core.game.StateObservation;
 import core.player.AbstractPlayer;
@@ -21,6 +22,8 @@ public class Agent extends AbstractPlayer {
     public Types.ACTIONS[] actions;
 
     protected SingleMCTSPlayer mctsPlayer;
+
+
 
     /**
      * Public constructor with state observation and time due.
