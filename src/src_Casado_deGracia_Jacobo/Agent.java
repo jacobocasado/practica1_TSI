@@ -6,44 +6,42 @@ import core.player.AbstractPlayer;
 import ontology.Types;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
-import tools.pathfinder.AStar;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.TreeSet;
-import java.util.Vector;
+
 
 
 public class Agent extends AbstractPlayer {
-    Vector2d avatar;
-    Vector2d fescala;
-    Vector2d pos_Portal;
+    static Vector2d avatar;
+    static Vector2d fescala;
+    static Vector2d pos_Portal;
     int nivel;
     int gemasObtenidas = 0;
     public Stack<Types.ACTIONS> caminoRecorrido =  new Stack<Types.ACTIONS>();
 
     public void deliberativoSimple(nodoConCoste nodoInicial){
-        calculaCaminoOptimo(nodoInicial);
+        caminoRecorrido = calculaCaminoOptimo(nodoInicial);
     }
 
-    private int distanciaManhattan(Vector2d pos1, Vector2d pos2){
+    private static int distanciaManhattan(Vector2d pos1, Vector2d pos2){
         return (int) (Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y-pos2.y));
     }
 
-    private int obtenerTipo (Vector2d posicion, StateObservation estado){
+    private static int obtenerTipo(Vector2d posicion, StateObservation estado){
 
-        if (posicion.x > 0 && posicion.x < estado.getObservationGrid().length && posicion.y > 0 &&  posicion.y < estado.getObservationGrid().length){
+        if(((posicion.x < estado.getObservationGrid().length) && (posicion.x >= 0)) &&
+                ((posicion.y < estado.getObservationGrid()[0].length && (posicion.y >= 0)))){
             // Guardamos la posicion en un vector de Observation y, si es suelo, devolvemos -1, y si no es suelo, devuelve el tipo, que es otro entero.
-
             ArrayList<Observation> aux = estado.getObservationGrid()[(int)posicion.x][(int)posicion.y];
             // Si es vacio, es suelo, por lo tanto, podemos andar sin problemas, y devolvemos -1.
             if(!aux.isEmpty()){
                 return aux.get(0).itype;
             }
+            return -1;
         }
-        return -1;
+        else return 0;
     }
 
     boolean hayMuro(Vector2d posicion, StateObservation estado){
@@ -77,46 +75,78 @@ public class Agent extends AbstractPlayer {
 
     }
 
-    boolean estoyEnPeligro(StateObservation estado, Vector2d posicion){
+    static int nivelDePeligro(Vector2d posicion, StateObservation estado){
+        if (estado.getNPCPositions() == null)
+            return 0;
 
-        boolean estoyEnPeligro = false;
-
+        int peligro = 0;
         ArrayList<Observation> enemigos = new ArrayList<Observation>(estado.getNPCPositions()[0]);
         ArrayList<Vector2d> enemigosEscalados = new ArrayList<>();
 
-        for (Observation d: enemigos){
+        for (Observation d: enemigos) {
             Vector2d posEnemigo = new Vector2d();
             posEnemigo = d.position;
             posEnemigo.x = Math.floor(posEnemigo.x / fescala.x);
             posEnemigo.y = Math.floor(posEnemigo.y / fescala.y);
-            enemigosEscalados.add(posEnemigo);
-        }
 
-        ArrayList<Vector2d> posicionesDeCalor = new ArrayList<>();
-        posicionesDeCalor.add(enemigosEscalados.get(0));
+            int distancia = distanciaManhattan(posicion, posEnemigo);
 
-        for (int i = -2; i < 3; ++i){
-            posicionesDeCalor.add(new Vector2d(enemigosEscalados.get(0).x + i, enemigosEscalados.get(0).y));
-
-            if (i == -1 || i == 1 ) {
-                posicionesDeCalor.add(new Vector2d(enemigosEscalados.get(0).x + i, enemigosEscalados.get(0).y - 1));
-                posicionesDeCalor.add(new Vector2d(enemigosEscalados.get(0).x + i, enemigosEscalados.get(0).y + 1));
+            switch (distancia) {
+                case (5):
+                    peligro += 4;
+                    break;
+                case (4):
+                    peligro += 5;
+                    break;
+                case (3):
+                    peligro += 6;
+                    break;
+                case (2):
+                    peligro += 7;
+                    break;
+                case (1):
+                    peligro += 8;
+                    break;
+                default:
+                    peligro += 0;
             }
 
-            if (i == 0) {
-                posicionesDeCalor.add(new Vector2d(enemigosEscalados.get(0).x + i, enemigosEscalados.get(0).y - 1));
-                posicionesDeCalor.add(new Vector2d(enemigosEscalados.get(0).x + i, enemigosEscalados.get(0).y + 1));
-                posicionesDeCalor.add(new Vector2d(enemigosEscalados.get(0).x + i, enemigosEscalados.get(0).y - 2));
-                posicionesDeCalor.add(new Vector2d(enemigosEscalados.get(0).x + i, enemigosEscalados.get(0).y + 2));
+            ArrayList<Vector2d> casillasCercanas = posicionesADistanciaDe(1, posicion);
+            for (Vector2d casilla: casillasCercanas){
+                if (obtenerTipo(casilla, estado) == 0)
+                    peligro++;
             }
+
         }
 
-        if (posicionesDeCalor.contains(posicion)){
-            estoyEnPeligro = true;
+        return peligro;
+    }
+
+
+    public ArrayList<Vector2d> posicionesADistancia(int distancia){
+        ArrayList<Vector2d> posiciones = new ArrayList<>();
+
+        for(int i = 0; i <= distancia; ++i){
+            posiciones.add(new Vector2d(avatar.x + i, avatar.y + distancia-i));
+            posiciones.add(new Vector2d(avatar.x + (-1)*i, avatar.y + distancia-i));
+            posiciones.add(new Vector2d(avatar.x + i, avatar.y + (-1)*(distancia-i)));
+            posiciones.add(new Vector2d(avatar.x + (-1)*i, avatar.y + (-1)*(distancia-i)));
         }
 
-        return estoyEnPeligro;
+        return posiciones;
+    }
 
+    public static ArrayList<Vector2d> posicionesADistanciaDe(int distancia, Vector2d posicion){
+        ArrayList<Vector2d> posiciones = new ArrayList<>();
+
+        for(int i = 0; i <= distancia; ++i){
+            posiciones.add(new Vector2d(posicion.x + i, posicion.y + distancia-i));
+            posiciones.add(new Vector2d(posicion.x + (-1)*i, posicion.y + distancia-i));
+            posiciones.add(new Vector2d(posicion.x + i, posicion.y + (-1)*(distancia-i)));
+            posiciones.add(new Vector2d(posicion.x + (-1)*i, posicion.y + (-1)*(distancia-i)));
+        }
+
+        return posiciones;
     }
 
     Vector2d buscarPosicionASalvoDeEnemigo(StateObservation estado){
@@ -132,32 +162,36 @@ public class Agent extends AbstractPlayer {
             enemigosEscalados.add(posEnemigo);
         }
 
-        ArrayList<Vector2d> posicionesASalvo = new ArrayList<>();
-        Vector2d posicionEnemigo = new Vector2d(enemigosEscalados.get(0));
 
-        for (int i = -1; i < 2; ++i){
-            if (!hayMuro(new Vector2d(avatar.x + i, avatar.y), estado) && !estoyEnPeligro(estado, new Vector2d(avatar.x + i, avatar.y)))
-                posicionesASalvo.add(new Vector2d(avatar.x + i, avatar.y));
-            if (!hayMuro(new Vector2d(avatar.x + i, avatar.y + 1), estado) && !estoyEnPeligro(estado, new Vector2d(avatar.x + i, avatar.y + 1)))
-                posicionesASalvo.add(new Vector2d(avatar.x - i, avatar.y));
-            if (!hayMuro(new Vector2d(avatar.x + i, avatar.y - 1), estado) && !estoyEnPeligro(estado, new Vector2d(avatar.x + i, avatar.y - 1)))
-                posicionesASalvo.add(new Vector2d(avatar.x - i, avatar.y));
-        }
+        boolean hayPeligro = true;
+        int indice = 0;
+        int distanciaBusqueda = 1;
+        ArrayList<Vector2d> cercanas = new ArrayList<>();
+        Vector2d posicionASalvo = new Vector2d();
 
-        int casillaMasLejana = 0;
-        int mayorDistancia = distanciaManhattan(posicionEnemigo, posicionesASalvo.get(0));
-
-        for (int i = 0; i < posicionesASalvo.size(); ++i){
-            if (distanciaManhattan(posicionEnemigo, posicionesASalvo.get(i)) > mayorDistancia){
-                mayorDistancia = distanciaManhattan(posicionEnemigo, posicionesASalvo.get(i));
-                casillaMasLejana = i;
+        while (hayPeligro){
+            cercanas = posicionesADistancia(distanciaBusqueda);
+            indice = 0;
+            while (hayPeligro && indice < cercanas.size()){
+                posicionASalvo = (cercanas.get(indice));
+                if(((posicionASalvo.x < estado.getObservationGrid().length) && (posicionASalvo.x >= 0)) &&
+                        ((posicionASalvo.y < estado.getObservationGrid()[0].length && (posicionASalvo.y >= 0)))){
+                    int elemento = obtenerTipo(posicionASalvo, estado);
+                    if(nivelDePeligro(posicionASalvo, estado) == 0 && elemento != 0 &&
+                            elemento != 10 && elemento != 11)
+                        hayPeligro = false;
+                }
+                indice++;
             }
+            distanciaBusqueda++;
         }
-        return posicionesASalvo.get(casillaMasLejana);
+        return posicionASalvo;
     }
 
 
     public Stack<Types.ACTIONS> calculaCaminoOptimo(nodoConCoste nodoInicial){
+
+        Stack<Types.ACTIONS> caminoRecorrido = new Stack<>();
 
         // Genero los contenedores, abiertos y cerrados para los nodos.
         TreeSet<nodoConCoste> abiertos = new TreeSet<nodoConCoste>();
@@ -190,7 +224,9 @@ public class Agent extends AbstractPlayer {
             cerrados.add(nodoActual);
             nodoActual = abiertos.pollFirst();
         }
-        return nodoActual.getCamino(caminoRecorrido);
+
+        nodoActual.getCamino(caminoRecorrido);
+        return caminoRecorrido;
     }
 
     public Agent (StateObservation stateObs, ElapsedCpuTimer elapsedTimer){
@@ -222,8 +258,11 @@ public class Agent extends AbstractPlayer {
         }
 
         else if (stateObs.getResourcesPositions() == null && stateObs.getNPCPositions() != null){
-            nivel = 3; // Nivel 3.
+            nivel = 4; // Nivel 3 y 4.
         }
+
+        else
+            nivel = 5;
 
     }
 
@@ -242,47 +281,71 @@ public class Agent extends AbstractPlayer {
                 return caminoRecorrido.pop();
 
             case 2:
-
                 if (caminoRecorrido.isEmpty()){
+
                     avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
                             stateObs.getAvatarPosition().y / fescala.y);
 
                     if (gemasObtenidas == 9){
                         nodoConCoste caminoHastaSalida = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), pos_Portal, stateObs);
-                        calculaCaminoOptimo(caminoHastaSalida);
+                        caminoRecorrido = calculaCaminoOptimo(caminoHastaSalida);
                     }
 
                     else{
                         Vector2d posicion_diamante = buscarGemaMasCercana(stateObs);
                         nodoConCoste buscaDiamante = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), posicion_diamante, stateObs);
-                        calculaCaminoOptimo(buscaDiamante);
+                        caminoRecorrido = calculaCaminoOptimo(buscaDiamante);
                         gemasObtenidas ++;
                     }
 
                 }
                 return caminoRecorrido.pop();
 
-            case 3:
 
+            case 4:
+                avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
+                        stateObs.getAvatarPosition().y / fescala.y);
 
-               /* if (estoyEnPeligro(stateObs, avatar) && caminoRecorrido.isEmpty()){
-                    System.out.println("Estoy en peligro.");
-                    avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
-                            stateObs.getAvatarPosition().y / fescala.y);
+               if (nivelDePeligro(avatar, stateObs) > 0){
                     Vector2d posicionASalvo = buscarPosicionASalvoDeEnemigo(stateObs);
                     nodoConCoste irASalvo = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), posicionASalvo, stateObs);
-                    calculaCaminoOptimo(irASalvo);
-                    caminoRecorrido.pop();
+                    caminoRecorrido = calculaCaminoOptimo(irASalvo);
+                    return caminoRecorrido.pop();
                 }
 
-                if (!caminoRecorrido.isEmpty())
-                    caminoRecorrido.pop();
+                else if (nivelDePeligro(avatar, stateObs) == 0)
+                    return Types.ACTIONS.ACTION_NIL;
 
-                else if (!estoyEnPeligro(stateObs, avatar))
-                    return Types.ACTIONS.ACTION_NIL;*/
+                break;
+
+            case 5:
+                // TODO si el enemigo esta encima de una casilla recalculo.
+                // TODO orientacion.
+                avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
+                        stateObs.getAvatarPosition().y / fescala.y);
+
+                Vector2d objetivo;
+                if(stateObs.getAvatarResources().isEmpty() || stateObs.getAvatarResources().get(6) < 9){
+                    // Calculamos la posición de la gema más cercana al avatar
+                    objetivo = buscarGemaMasCercana(stateObs);
+                }
+                else
+                    objetivo = pos_Portal;
+
+                if(caminoRecorrido.isEmpty() || nivelDePeligro(avatar, stateObs) > 0){
+                    if (nivelDePeligro(avatar, stateObs) > 7)
+                        objetivo = buscarPosicionASalvoDeEnemigo(stateObs);
+                    nodoConCoste nodoInicial = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), objetivo, stateObs);
+                    caminoRecorrido = calculaCaminoOptimo(nodoInicial);
+                }
+                return caminoRecorrido.pop();
 
         }
         return null;
+
+
+
+
     }
 
 }

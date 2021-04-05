@@ -44,6 +44,8 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
 
     }
 
+
+
     public nodoConCoste(nodoConCoste nodoPadre, Types.ACTIONS accion) {
 
         recalcularOrientacion(accion, nodoPadre.orientacionJugador);
@@ -60,9 +62,9 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
         modificarPosicion(nodoPadre.posJugador, accion);
         // todo perfeccionar. He hecho el metodo de detectar si hay enemigo. Pero con zona de calor renta mas.
         // todo si pasamos al lado de un muro que la funcion heuristica sea un poco mas cara. Asi el agente no le renta ir pegado al muro tampoco para que no le encierren y menos en las esquinas.
-        if (hayEnemigoEn(posJugador))
-            this.g += 10;
         this.h = distanciaManhattanDesde();
+        this.h += Agent.nivelDePeligro(posJugador, estado);
+
     }
 
     // Metodo que devuelve un enumerado llamado orientacion a partir de un vector2d de la orientacion del juego.
@@ -174,8 +176,10 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
         int tipoDeCasilla;
         tipoDeCasilla = obtenerTipo(posicionNueva);
         boolean esPosibleMoverse = false;
-        if (tipoDeCasilla != 10 && tipoDeCasilla != 11 && tipoDeCasilla != 0) // Si NO HAY SUELO
+        if (tipoDeCasilla != 10 && tipoDeCasilla != 11 && tipoDeCasilla != 0){
             esPosibleMoverse = true;
+        }
+
 
         return esPosibleMoverse;
 
@@ -186,8 +190,6 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
     }
 
     private int obtenerTipo (Vector2d posicion){
-
-        if (posicion.x > 0 && posicion.x < estado.getObservationGrid()[0].length && posicion.y > 0 && posicion.y < estado.getObservationGrid()[0].length){
             // Guardamos la posicion en un vector de Observation y, si es suelo, devolvemos -1, y si no es suelo, devuelve el tipo, que es otro entero.
             ArrayList<Observation> aux = estado.getObservationGrid()[(int)posicion.x][(int)posicion.y];
 
@@ -195,7 +197,6 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
             if(!aux.isEmpty()){
                 return aux.get(0).itype;
             }
-        }
         return -1;
     }
 
@@ -206,11 +207,9 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
 
     // Función que actualiza el estado del juego. Se llama cuando hay que comprobar si, por ejemplo, hay enemigos.
     // Se actualiza el estado antes de hacer la comprobación.
-    private void recalcularEstado(StateObservation estadoNuevo){
-        estado = estadoNuevo;
-    }
     // Método que reasigna a un nodo su nodo padre; esto ocurre cuando llegamos a un nodo por otro camino más óptimo.
     // Esto es recursivo y va a llamar al método para cada uno de sus hijos.
+
     public void setPadreNuevo(nodoConCoste nodoPadre){
 
         this.nodoPadre = nodoPadre;
@@ -286,8 +285,9 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
         // Estoy en el nodo padre (el unico con accion nula)
         if (this.accion != null){
             camino.push(accion);
-            if (orientacionJugador != nodoPadre.orientacionJugador)
+            if (orientacionJugador != nodoPadre.orientacionJugador){
                 camino.push(accion);
+            }
             nodoPadre.getCamino(camino);
         }
 
