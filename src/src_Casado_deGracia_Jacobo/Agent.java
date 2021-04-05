@@ -75,11 +75,11 @@ public class Agent extends AbstractPlayer {
 
     }
 
-    static int nivelDePeligro(Vector2d posicion, StateObservation estado){
+    static double nivelDePeligro(Vector2d posicion, StateObservation estado){
         if (estado.getNPCPositions() == null)
             return 0;
 
-        int peligro = 0;
+        double peligro = 0;
         ArrayList<Observation> enemigos = new ArrayList<Observation>(estado.getNPCPositions()[0]);
         ArrayList<Vector2d> enemigosEscalados = new ArrayList<>();
 
@@ -92,20 +92,17 @@ public class Agent extends AbstractPlayer {
             int distancia = distanciaManhattan(posicion, posEnemigo);
 
             switch (distancia) {
-                case (5):
-                    peligro += 4;
-                    break;
                 case (4):
-                    peligro += 5;
+                    peligro += 1.5;
                     break;
                 case (3):
-                    peligro += 6;
+                    peligro += 2.0;
                     break;
                 case (2):
-                    peligro += 7;
+                    peligro += 2.5;
                     break;
                 case (1):
-                    peligro += 8;
+                    peligro += 3.0;
                     break;
                 default:
                     peligro += 0;
@@ -150,18 +147,6 @@ public class Agent extends AbstractPlayer {
     }
 
     Vector2d buscarPosicionASalvoDeEnemigo(StateObservation estado){
-
-        ArrayList<Observation> enemigos = new ArrayList<Observation>(estado.getNPCPositions()[0]);
-        ArrayList<Vector2d> enemigosEscalados = new ArrayList<>();
-
-        for (Observation d: enemigos){
-            Vector2d posEnemigo = new Vector2d();
-            posEnemigo = d.position;
-            posEnemigo.x = Math.floor(posEnemigo.x / fescala.x);
-            posEnemigo.y = Math.floor(posEnemigo.y / fescala.y);
-            enemigosEscalados.add(posEnemigo);
-        }
-
 
         boolean hayPeligro = true;
         int indice = 0;
@@ -307,8 +292,10 @@ public class Agent extends AbstractPlayer {
                         stateObs.getAvatarPosition().y / fescala.y);
 
                if (nivelDePeligro(avatar, stateObs) > 0){
+
                     Vector2d posicionASalvo = buscarPosicionASalvoDeEnemigo(stateObs);
                     nodoConCoste irASalvo = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), posicionASalvo, stateObs);
+                   System.out.println(posicionASalvo);
                     caminoRecorrido = calculaCaminoOptimo(irASalvo);
                     return caminoRecorrido.pop();
                 }
@@ -319,7 +306,6 @@ public class Agent extends AbstractPlayer {
                 break;
 
             case 5:
-                // TODO si el enemigo esta encima de una casilla recalculo.
                 // TODO orientacion.
                 avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
                         stateObs.getAvatarPosition().y / fescala.y);
@@ -333,11 +319,12 @@ public class Agent extends AbstractPlayer {
                     objetivo = pos_Portal;
 
                 if(caminoRecorrido.isEmpty() || nivelDePeligro(avatar, stateObs) > 0){
-                    if (nivelDePeligro(avatar, stateObs) > 7)
+                    if (nivelDePeligro(avatar, stateObs) > 2.5 && distanciaManhattan(avatar, objetivo) > 2)
                         objetivo = buscarPosicionASalvoDeEnemigo(stateObs);
                     nodoConCoste nodoInicial = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), objetivo, stateObs);
                     caminoRecorrido = calculaCaminoOptimo(nodoInicial);
                 }
+
                 return caminoRecorrido.pop();
 
         }
