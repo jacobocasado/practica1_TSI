@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 
 
+// TODO hacer esto mas eficiente.
 public class Agent extends AbstractPlayer {
     static Vector2d avatar;
     static Vector2d fescala;
@@ -120,6 +121,9 @@ public class Agent extends AbstractPlayer {
                 case (1):
                     peligro += 3.0;
                     break;
+                case (0):
+                    peligro += 4.0;
+                    break;
                 default:
                     peligro += 0;
             }
@@ -130,6 +134,7 @@ public class Agent extends AbstractPlayer {
                     peligro++;
             }*/
 
+            peligro = Math.pow(peligro, 1.3);
         }
 
         return peligro;
@@ -163,7 +168,7 @@ public class Agent extends AbstractPlayer {
         return posiciones;
     }
 
-    Vector2d buscarPosicionASalvoDeEnemigo(StateObservation estado){
+    Vector2d buscarPosicionASalvoDeEnemigo(StateObservation estado) {
 
         boolean hayPeligro = true;
         int indice;
@@ -171,19 +176,27 @@ public class Agent extends AbstractPlayer {
         ArrayList<Vector2d> cercanas = new ArrayList<>();
         Vector2d posicionASalvo = new Vector2d();
 
-        while (hayPeligro){
+        int menorDistancia = 200;
+
+        while (hayPeligro) {
             cercanas = posicionesADistanciaDe(distanciaBusqueda, avatar);
-            indice = 0;
-            while (hayPeligro && indice < cercanas.size()){
-                posicionASalvo = (cercanas.get(indice));
-                if(((posicionASalvo.x < estado.getObservationGrid().length) && (posicionASalvo.x >= 0)) &&
-                        ((posicionASalvo.y < estado.getObservationGrid()[0].length && (posicionASalvo.y >= 0)))){
-                    int elemento = obtenerTipo(posicionASalvo, estado);
-                    if(nivelDePeligro(posicionASalvo, estado) == 0 && elemento != 0 &&
-                            elemento != 10 && elemento != 11)
+            for (Vector2d posicion : cercanas) {
+                if (((posicion.x < estado.getObservationGrid().length) && (posicion.x >= 0)) &&
+                        ((posicion.y < estado.getObservationGrid()[0].length && (posicion.y >= 0)))) {
+
+                    int elemento = obtenerTipo(posicion, estado);
+
+                    if (nivelDePeligro(posicion, estado) == 0 && elemento != 0 &&
+                                                                 elemento != 10 && elemento != 11) {
+
                         hayPeligro = false;
+                        nodoConCoste nodo = new nodoConCoste(avatar, estado.getAvatarOrientation(), posicion, estado);
+                        int distancia = calculaCaminoOptimo(nodo).size();
+                        if (distancia <= menorDistancia) {
+                            posicionASalvo = posicion;
+                        }
+                    }
                 }
-                indice++;
             }
             distanciaBusqueda++;
         }
@@ -312,7 +325,6 @@ public class Agent extends AbstractPlayer {
 
                     Vector2d posicionASalvo = buscarPosicionASalvoDeEnemigo(stateObs);
                     nodoConCoste irASalvo = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), posicionASalvo, stateObs);
-                   System.out.println(posicionASalvo);
                     caminoRecorrido = calculaCaminoOptimo(irASalvo);
                     return caminoRecorrido.pop();
                 }
@@ -323,7 +335,7 @@ public class Agent extends AbstractPlayer {
                 break;
 
             case 5:
-                // TODO orientacion.
+
                 avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
                         stateObs.getAvatarPosition().y / fescala.y);
 
@@ -336,7 +348,7 @@ public class Agent extends AbstractPlayer {
                     objetivo = pos_Portal;
 
                 if(caminoRecorrido.isEmpty() || nivelDePeligro(avatar, stateObs) > 0){
-                    if (nivelDePeligro(avatar, stateObs) > 1.5)
+                    if (nivelDePeligro(avatar, stateObs) > 2.0)
                         objetivo = buscarPosicionASalvoDeEnemigo(stateObs);
                     nodoConCoste nodoInicial = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), objetivo, stateObs);
                     caminoRecorrido = calculaCaminoOptimo(nodoInicial);
