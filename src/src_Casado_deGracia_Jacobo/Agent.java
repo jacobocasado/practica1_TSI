@@ -18,7 +18,7 @@ public class Agent extends AbstractPlayer {
     static Vector2d avatar;
     static Vector2d fescala;
     static Vector2d pos_Portal;
-    int nivel;
+    static int nivel;
     int gemasObtenidas = 0;
     public Stack<Types.ACTIONS> caminoRecorrido =  new Stack<Types.ACTIONS>();
 
@@ -106,6 +106,10 @@ public class Agent extends AbstractPlayer {
             int distancia = distanciaManhattan(posicion, posEnemigo);
 
             switch (distancia) {
+                case (6):
+                    if (nivel == 4)
+                        peligro += 0.5;
+                    break;
                 case (5):
                     peligro += 1.0;
                     break;
@@ -119,22 +123,22 @@ public class Agent extends AbstractPlayer {
                     peligro += 2.5;
                     break;
                 case (1):
-                    peligro += 3.0;
+                    peligro += 5;
                     break;
                 case (0):
-                    peligro += 4.0;
+                    peligro += 6;
                     break;
                 default:
                     peligro += 0;
             }
 
-            /*ArrayList<Vector2d> casillasCercanas = posicionesADistanciaDe(1, posicion);
+            /*ArrayList<Vector2d> casillasCercanas = posicionesADistanciaDe(2, posicion);
             for (Vector2d casilla: casillasCercanas){
                 if (obtenerTipo(casilla, estado) == 0)
-                    peligro++;
+                    peligro =+ 0.5;
             }*/
 
-            peligro = Math.pow(peligro, 1.3);
+            peligro = Math.pow(peligro, (1.25));
         }
 
         return peligro;
