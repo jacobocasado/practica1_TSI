@@ -92,6 +92,9 @@ public class Agent extends AbstractPlayer {
             int distancia = distanciaManhattan(posicion, posEnemigo);
 
             switch (distancia) {
+                case (5):
+                    peligro += 1.0;
+                    break;
                 case (4):
                     peligro += 1.5;
                     break;
@@ -149,7 +152,7 @@ public class Agent extends AbstractPlayer {
     Vector2d buscarPosicionASalvoDeEnemigo(StateObservation estado){
 
         boolean hayPeligro = true;
-        int indice = 0;
+        int indice;
         int distanciaBusqueda = 1;
         ArrayList<Vector2d> cercanas = new ArrayList<>();
         Vector2d posicionASalvo = new Vector2d();
@@ -319,7 +322,7 @@ public class Agent extends AbstractPlayer {
                     objetivo = pos_Portal;
 
                 if(caminoRecorrido.isEmpty() || nivelDePeligro(avatar, stateObs) > 0){
-                    if (nivelDePeligro(avatar, stateObs) > 2.5 && distanciaManhattan(avatar, objetivo) > 2)
+                    if (nivelDePeligro(avatar, stateObs) > 2.0 && distanciaManhattan(avatar, objetivo) > 2)
                         objetivo = buscarPosicionASalvoDeEnemigo(stateObs);
                     nodoConCoste nodoInicial = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), objetivo, stateObs);
                     caminoRecorrido = calculaCaminoOptimo(nodoInicial);

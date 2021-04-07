@@ -45,7 +45,6 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
     }
 
 
-
     public nodoConCoste(nodoConCoste nodoPadre, Types.ACTIONS accion) {
 
         recalcularOrientacion(accion, nodoPadre.orientacionJugador);
