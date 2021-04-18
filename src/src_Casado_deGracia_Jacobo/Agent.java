@@ -198,8 +198,7 @@ public class Agent extends AbstractPlayer {
                 // Las casillas mas peligrosas, obviamente, seran aquellas mas cercanas al enemigo.
                 switch (distancia) {
                     case (6):
-                        if (nivel == 4)
-                            peligro += 1;
+                        peligro += 1;
                         break;
                     case (5):
                         peligro += 1;
@@ -745,7 +744,7 @@ public class Agent extends AbstractPlayer {
                 else
                     objetivo = pos_Portal;
 
-                if(caminoRecorrido.isEmpty() || nivelDePeligro(avatar, stateObs) > 2){
+                if(caminoRecorrido.isEmpty() || nivelDePeligro(avatar, stateObs) > 0){
                     if (nivelDePeligro(avatar, stateObs) > 0){
                         objetivo = buscarPosicionASalvoDeEnemigo(stateObs, elapsedTimer);
                     }
