@@ -43,7 +43,6 @@ public class Agent extends AbstractPlayer {
      * el metodo de aplicar el A* desde el nodo inicial hasta el portal.
      * El camino que devuelve es el optimo.
      **/
-
     public void deliberativoSimple(nodoConCoste nodoInicial){
         caminoRecorrido = calculaCaminoOptimo(nodoInicial);
     }
@@ -54,7 +53,6 @@ public class Agent extends AbstractPlayer {
      @param pos2 la posicion en Vector2d del objeto2.
      @return la distancia manhattan entre ambos.
      */
-
     private static int distanciaManhattan(Vector2d pos1, Vector2d pos2){
         return (int) (Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y-pos2.y));
     }
@@ -68,7 +66,6 @@ public class Agent extends AbstractPlayer {
      POR EJEMPLO, EL MURO ES TIPO 0.
      Eso viene en la propia codificacion del juego.
      */
-
     private static int obtenerTipo(Vector2d posicion, StateObservation estado){
 
         if(((posicion.x < estado.getObservationGrid().length) && (posicion.x >= 0)) &&
@@ -95,7 +92,6 @@ public class Agent extends AbstractPlayer {
      * @param estado estado del juego. Util para ver que gemas quedan por coger.
      * @return La posicion en Vector2d de la gema mas cercana calculada usando el criterio dicho anteriormente.
      */
-
     public Vector2d buscarGemaMasCercana(StateObservation estado){
 
         ArrayList<Observation> gema = new ArrayList<Observation>(estado.getResourcesPositions()[0]);
@@ -124,6 +120,19 @@ public class Agent extends AbstractPlayer {
 
     }
 
+    /**
+     * Metodo que busca la gema mas cercana, en vez de a un jugador, a una posicion dada.
+     * Ademas, la gema que encuentra la quita de la lista de gemas recibida como parametro.
+     * Es totalmente igual que el metodo de arriba pero en vez de evaluar la gema mas cercana con el jugador,
+     * la evalua con la posicion que recibe de parametro.
+     * Se ha implementado de manera que el criterio para elegir la gema mas cercana es con distancia Manhattan,
+     * no con distancia A Star.
+     * De todas las gemas que tiene por coger (almacenadas en la variable estado) toma la que mas cerca esta en Distancia Manhattan.
+     *
+     * @param gemasEscaladas Vector que contiene las gemas que quedan por coger.
+     * @return La posicion en Vector2d de la gema mas cercana calculada usando el criterio dicho anteriormente.
+     * La gema se elimin del vector de gemasEscaladas
+     */
     public Vector2d buscarGemaMasCercanaAPosicion(ArrayList<Vector2d> gemasEscaladas, Vector2d posicion){
 
         // Aplico Greedy para ver cual es la gema mas cercana. Cuando acabe de iterar, la devuelvo.
@@ -236,7 +245,6 @@ public class Agent extends AbstractPlayer {
      * @return Un ArrayList de Vector2d de todas las posiciones a distancia X de la casilla DADA.
      * Posteriormente, de ese Array, se tomara, por ejemplo, la casilla a la que menos cueste ir, para ir a la casilla segura de MENOR COSTE.
      */
-
     public static ArrayList<Vector2d> posicionesADistanciaDe(int distancia, Vector2d posicion){
 
         ArrayList<Vector2d> posiciones = new ArrayList<>();
@@ -266,11 +274,11 @@ public class Agent extends AbstractPlayer {
      *      CASILLAS DE RANGO 2 POR EJEMPLO, SELECCIONA A LA QUE MENOS COSTE TIENE IR.
      *      De esa manera, no solo priorizo que el camino sea mas corto, sino que me evito que yendo al camino genere otras situaciones que quizas sean mas peligrosas.
      *
-     * @param estado
+     * @param estado Estado del juego
+     * @param timer El timer necesario para, en caso de que la busqueda sea demasiado larga, el algoritmo pare.
      * @return
      */
-
-    Vector2d buscarPosicionASalvoDeEnemigo(StateObservation estado) {
+    Vector2d buscarPosicionASalvoDeEnemigo(StateObservation estado, ElapsedCpuTimer timer) {
 
         boolean hayPeligro = true;
         int indice;
@@ -300,7 +308,7 @@ public class Agent extends AbstractPlayer {
                         // De entre todas, me quedo con la que menor distancia A Star tiene.
                         // Por tanto, calculo el camino desde mi avatar hasta la casilla segura y mido el COSTE.
                         nodoConCoste nodo = new nodoConCoste(avatar, estado.getAvatarOrientation(), posicion, estado);
-                        int distancia = calculaCaminoOptimo(nodo).size();
+                        int distancia = calculaCaminoOptimoDinamico(nodo, timer).size();
                         // Me quedo con la de menor coste.
                         if (distancia <= menorDistancia) {
                             posicionASalvo = posicion;
@@ -331,7 +339,6 @@ public class Agent extends AbstractPlayer {
      * Si hay enemigos en el camino, este metodo se llamara en cuanto nuestro agente se vea en peligro para recalcular el camino hacia una zona segura,
      * mientras que, si estoy a salvo de los enemigos o directamente no hay enemigos (en el caso del modelo deliberativo) generara el camino hacia una gema de manera optima.
      * */
-
     public static Stack<Types.ACTIONS> calculaCaminoOptimo(nodoConCoste nodoInicial){
 
         // Creamos el Stack de acciones que vamos a devolver.
@@ -354,6 +361,77 @@ public class Agent extends AbstractPlayer {
         // Sacamos el primer nodo.
         nodoConCoste nodoActual = abiertos.pollFirst();
         while (nodoActual.posJugador.x != nodoActual.posSiguienteDestino.x || nodoActual.posJugador.y != nodoActual.posSiguienteDestino.y){
+            // Generamos los hijos del nodo el cual estamos evaluando.
+            nodoActual.generarHijos();
+            for (nodoConCoste nodoI: nodoActual.nodosHijos){
+                // Por cada uno de los nodos hijos del nodo que estamos expandiendo, vemos si esta o no en abiertos.
+                // Si esta en abiertos, y ese nodo
+                if (abiertos.contains(nodoI)){
+                    nodoConCoste aux = abiertos.ceiling(nodoI);
+                    if ((aux.g + aux.h) > (nodoI.g + nodoI.h))
+                        aux.setPadreNuevo(nodoI.nodoPadre);
+                }
+                // Si por el contrario el nodo a evaluar esta en cerrados, hacemos exactamente lo mismo que el anterior.
+                // Separamos ambos en un IF y en un ELSE IF ya que el ceiling del nodo estara o bien en abiertos, o bien en cerrados.
+                // Como el algoritmo no sabe donde esta el nodo exactamente, lo separamos en una comprobacion u otra.
+                else if (cerrados.contains(nodoI)){
+                    nodoConCoste aux = cerrados.ceiling(nodoI);
+                    if ((aux.g + aux.h) > (nodoI.g + nodoI.h))
+                        aux.setPadreNuevo(nodoI.nodoPadre);
+                }
+                // Si por el contrario el nodo no esta ni en abiertos ni en cerrados, lo insertamos en la lista de abiertos,
+                // para posteriormente actualizarlo y evaluarlo.
+                else
+                    abiertos.add(nodoI);
+            }
+            // Cuando hayamos terminado de generar ese nodo y sus hijos y evaluarlos, insertamos ese nodo en cerrados.
+            cerrados.add(nodoActual);
+            // Seleccionamos el nodo primero de abiertos, por la logica que he dicho anteriormente de que el primer nodo de abiertos sera el mejor a expandir.
+            nodoActual = abiertos.pollFirst();
+        }
+        // Cuando salgamos de este bucle, hemos obtenido un nodo solucion ya que la posicion de ese nodo es la posicion a buscar.
+        // Por tanto, llamamos a getCamino que hace que, a partir de un nodo solucion, devuelva el camino total hasta el inicio.
+        // Esto lo conseguimos ya que la estructura que hemos creado es a partir de nodos que apuntan a sus nodos padres, por tanto,
+        // consiguiendo el nodo solucion y haciendo un recorrido recursivo hacia atras, encontramos el camino.
+
+        // Al insertarlo en un Stack y de final a principio, el primer nodo que se quedara en el tope de la pila sera el nodo INICIAL,
+        // proseguido del nodo segundo, luego del tercero...
+        // por tanto, es una buena estructura a usar para sacar los nodos ya que haciendo camino.pop() vamos obteniendo la secuencia de acciones.
+        nodoActual.getCamino(caminoRecorrido);
+
+        // Devolvemos el camino en un Stack de ACTIONS.
+        return caminoRecorrido;
+    }
+
+    /**
+     *
+     * ** MODIFICACION DEL ALGORITMO calculaCaminoOptimo (encima de este metodo) que recibe un timer y, en caso de que haya poco tiempo restante, deja de explorar el arbol.
+     *     Util para el nivel 5.
+     * */
+
+    public static Stack<Types.ACTIONS> calculaCaminoOptimoDinamico(nodoConCoste nodoInicial, ElapsedCpuTimer timer){
+
+        // Creamos el Stack de acciones que vamos a devolver.
+        Stack<Types.ACTIONS> caminoRecorrido = new Stack<>();
+
+        // Genero los contenedores, abiertos y cerrados para los nodos.
+        /*
+            Almacenamos los nodos en un set ya que, en el paquete del nodoConCoste hemos sobrecargado el operador de comparacion (metodo compareTo)
+            de esta manera, cuando insertemos los nodos en el Set, este los va ordenar de manera que el primer nodo al que se accede en el set sea el de menor g.
+            Por tanto, iremos sacando nodos y moviendolos de un Set a otro, y, ademas de ello, el acceso a estos es rapido, ya que abiertos.get(0) nos coge el nodo de menor g
+            para asegurarnos de que vamos expandiendo por el camino de menor coste.
+            */
+        TreeSet<nodoConCoste> abiertos = new TreeSet<nodoConCoste>();
+        TreeSet<nodoConCoste> cerrados = new TreeSet<nodoConCoste>();
+
+        // Aniadimos el nodo inicial a abiertos.
+        abiertos.add(nodoInicial);
+
+        // Mientras que no se haya alcanzado la posicion destino,
+        // Sacamos el primer nodo.
+        nodoConCoste nodoActual = abiertos.pollFirst();
+        while ((nodoActual.posJugador.x != nodoActual.posSiguienteDestino.x || nodoActual.posJugador.y != nodoActual.posSiguienteDestino.y) &&
+        timer.remainingTimeMillis() > 5){
             // Generamos los hijos del nodo el cual estamos evaluando.
             nodoActual.generarHijos();
             for (nodoConCoste nodoI: nodoActual.nodosHijos){
@@ -483,63 +561,6 @@ public class Agent extends AbstractPlayer {
         return caminoRecorrido;
     }
 
-    public static nodoConCoste calculaCaminoOptimoNodo(nodoConCoste nodoInicial){
-
-        // Genero los contenedores, abiertos y cerrados para los nodos.
-        /*
-            Almacenamos los nodos en un set ya que, en el paquete del nodoConCoste hemos sobrecargado el operador de comparacion (metodo compareTo)
-            de esta manera, cuando insertemos los nodos en el Set, este los va ordenar de manera que el primer nodo al que se accede en el set sea el de menor g.
-            Por tanto, iremos sacando nodos y moviendolos de un Set a otro, y, ademas de ello, el acceso a estos es rapido, ya que abiertos.get(0) nos coge el nodo de menor g
-            para asegurarnos de que vamos expandiendo por el camino de menor coste.
-            */
-        TreeSet<nodoConCoste> abiertos = new TreeSet<nodoConCoste>();
-        TreeSet<nodoConCoste> cerrados = new TreeSet<nodoConCoste>();
-
-        // Aniadimos el nodo inicial a abiertos.
-        abiertos.add(nodoInicial);
-
-        // Mientras que no se haya alcanzado la posicion destino,
-        // Sacamos el primer nodo.
-        nodoConCoste nodoActual = abiertos.pollFirst();
-        while (nodoActual.posJugador.x != nodoActual.posSiguienteDestino.x || nodoActual.posJugador.y != nodoActual.posSiguienteDestino.y){
-            // Generamos los hijos del nodo el cual estamos evaluando.
-            nodoActual.generarHijos();
-            for (nodoConCoste nodoI: nodoActual.nodosHijos){
-                // Por cada uno de los nodos hijos del nodo que estamos expandiendo, vemos si esta o no en abiertos.
-                // Si esta en abiertos, y ese nodo
-                if (abiertos.contains(nodoI)){
-                    nodoConCoste aux = abiertos.ceiling(nodoI);
-                    if ((nodoI.g + nodoI.h) < (aux.g + aux.h))
-                        aux.setPadreNuevo(nodoI.nodoPadre);
-                }
-                // Si por el contrario el nodo a evaluar esta en cerrados, hacemos exactamente lo mismo que el anterior.
-                // Separamos ambos en un IF y en un ELSE IF ya que el ceiling del nodo estara o bien en abiertos, o bien en cerrados.
-                // Como el algoritmo no sabe donde esta el nodo exactamente, lo separamos en una comprobacion u otra.
-                else if (cerrados.contains(nodoI)){
-                    nodoConCoste aux = cerrados.ceiling(nodoI);
-                    if ((nodoI.g + nodoI.h) < (aux.g + aux.h))
-                        aux.setPadreNuevo(nodoI.nodoPadre);
-                }
-                // Si por el contrario el nodo no esta ni en abiertos ni en cerrados, lo insertamos en la lista de abiertos,
-                // para posteriormente actualizarlo y evaluarlo.
-                else
-                    abiertos.add(nodoI);
-            }
-            // Cuando hayamos terminado de generar ese nodo y sus hijos y evaluarlos, insertamos ese nodo en cerrados.
-            cerrados.add(nodoActual);
-            // Seleccionamos el nodo primero de abiertos, por la logica que he dicho anteriormente de que el primer nodo de abiertos sera el mejor a expandir.
-            nodoActual = abiertos.pollFirst();
-        }
-        // Cuando salgamos de este bucle, hemos obtenido un nodo solucion ya que la posicion de ese nodo es la posicion a buscar.
-        // Por tanto, llamamos a getCamino que hace que, a partir de un nodo solucion, devuelva el camino total hasta el inicio.
-        // Esto lo conseguimos ya que la estructura que hemos creado es a partir de nodos que apuntan a sus nodos padres, por tanto,
-        // consiguiendo el nodo solucion y haciendo un recorrido recursivo hacia atras, encontramos el camino.
-
-        // Devolvemos el ultimo nodo en vez de realizar el metodo getCamino.
-        // Esa es la unica diferencia entre este y el otro metodo.
-        return nodoActual;
-    }
-
     /**
      * Constructor de nuestro AGENTE.
      * Al ser uno solo, este tiene que detectar, usando la variable stateObs, si hay o no enemigos, y si hay o no objetos que coger.
@@ -566,7 +587,6 @@ public class Agent extends AbstractPlayer {
         avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
                 stateObs.getAvatarPosition().y / fescala.y);
 
-
         /**
          * Dependiendo de si hay o no recursos y de si hay o no enemigos, almaceno en la variable de clase 'nivel'
          * el nivel en el que estoy; de esa manera, en el ACT, puedo hacer una cosa u otra ya que mi comportamiento
@@ -582,9 +602,9 @@ public class Agent extends AbstractPlayer {
         }
 
         // AGENTE NIVEL 2. NO HAY ENEMIGOS, PERO HAY UNA LISTA DE GEMAS POR COGER ANTES DE LLEGAR AL PORTAL.
-        else if (stateObs.getResourcesPositions() != null && stateObs.getNPCPositions() == null){
+        else if (stateObs.getResourcesPositions() != null && stateObs.getNPCPositions() == null) {
             nivel = 2; // Nivel 2.
-            Vector2d posicionActual =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
+            /*Vector2d posicionActual =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
                     stateObs.getAvatarPosition().y / fescala.y);
             ArrayList<Observation> gema = new ArrayList<Observation>(stateObs.getResourcesPositions()[0]);
             // Necesito escalar las gemas ya que estan sacadas de StateObs.
@@ -611,7 +631,7 @@ public class Agent extends AbstractPlayer {
 
             buscaDiamante.setDestino(pos_Portal);
             buscaDiamante = calculaCaminoOptimoNodo(buscaDiamante);
-            buscaDiamante.getCamino(caminoRecorrido);
+            buscaDiamante.getCamino(caminoRecorrido);*/
         }
 
         // AGENTE NIVEL 3 Y 4. HAY ENEMIGOS PERO NO HAY GEMAS. REACTIVO.
@@ -622,18 +642,40 @@ public class Agent extends AbstractPlayer {
         // AGENTE NIVEL 5. REACTIVO DELIBERATIVO. HAY GEMAS Y ENEMIGOS.
         else
             nivel = 5;
-
     }
+
+
+    /**
+     * Metodo ACT que se ejecuta en cada tic del juego.
+     * Como en el constructor del agente hemos definido que la variable nivel tome un valor dependiendo de en que nivel estemos,
+     * en este metodo se comprueba el valor de esta variable y dependiendo de eso el agente realizara acciones diferentes.
+     *
+     * Dentro de cada case del propio switch se procedera a comentar lo que el agente realiza y por que lo hace.
+     *
+     */
 
     @Override
     public Types.ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
 
         switch(nivel){
             case 1:
+                /**
+                 * Como en el nivel 1 (agente deliberativo) el camino se puede calcular en el propio constructor, aqui
+                 * se realizan pops de la pila hasta que el agente llegue al portal.
+                 */
                 return caminoRecorrido.pop();
 
             case 2:
-                /*if (caminoRecorrido.isEmpty()){
+                /*
+                    En este caso, el agente tambien es deliberativo pero he optado por realizar una ruta por cada vez que
+                    lleguemos a una gema nueva.
+                    Cada vez que el camino se vacie (es decir, en el primer act o cuando hayamos llegado a una gema),
+                    el agente recalcula su posicion y, si ha cogido las 9 gemas, se vuelve al portal;
+                    en otro caso, busca el siguiente diamante y realiza un Pathing hasta ese camino.
+
+                    Siempre hace un return del tope de la pila, ya que o bien va hacia una gema, o bien va hacia la salida.
+                 */
+                if (caminoRecorrido.isEmpty()){
 
                     avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
                             stateObs.getAvatarPosition().y / fescala.y);
@@ -650,17 +692,22 @@ public class Agent extends AbstractPlayer {
                         gemasObtenidas ++;
                     }
 
-                }*/
-
+                }
                 return caminoRecorrido.pop();
 
-
+                /*
+                    En este case se aplica el comportamiento necesario para  los niveles reactivos, tanto el de un
+                    solo enemigo como el de dos enemigos.
+                    El personaje, en cada act, recalcula su posicion y evalua su nivel de peligro.
+                    Si se siente en peligro, busca una posicion a salvo y hace un Pathing hacia esa posicion.
+                    En otro caso, si no se siente en peligro, simplemente devuelve un ACTION_NIL (se queda en el sitio).
+                 */
             case 4:
                 avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
                         stateObs.getAvatarPosition().y / fescala.y);
 
                if (nivelDePeligro(avatar, stateObs) > 0){
-                    Vector2d posicionASalvo = buscarPosicionASalvoDeEnemigo(stateObs);
+                    Vector2d posicionASalvo = buscarPosicionASalvoDeEnemigo(stateObs, elapsedTimer);
                     nodoConCoste irASalvo = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), posicionASalvo, stateObs);
                     caminoRecorrido = calculaCaminoOptimo(irASalvo);
                     return caminoRecorrido.pop();
@@ -672,6 +719,20 @@ public class Agent extends AbstractPlayer {
                 break;
 
             case 5:
+                /*
+                    Este es el comportamiento necesario para implementar el agente reactivo/deliberativo.
+                    El agente comienza, en cada iteracion del act, calculando su posicion.
+                    Si quedan gemas por coger, su objetivo es la gema mas cercana (dist. Manhattan).
+                    En otro caso, su objetivo es el portal.
+
+                    A continuacion, si el camino recorrido esta vacio o bien esta en peligro,
+                    busca una posicion a salvo del enemigo y realiza un pathing hacia ella hasta que no se encuentre en peligro,
+                    momento en el que ira a por la siguiente gema.
+
+                    Por tanto, alternamos entre momentos en los que nos interesa esquivar al enemigo y otros en los que vamos directos
+                    a por la gema, dependiendo del momento y el estado del juego.
+
+                 */
 
                 avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
                         stateObs.getAvatarPosition().y / fescala.y);
@@ -685,15 +746,18 @@ public class Agent extends AbstractPlayer {
                     objetivo = pos_Portal;
 
                 if(caminoRecorrido.isEmpty() || nivelDePeligro(avatar, stateObs) > 2){
-                    if (nivelDePeligro(avatar, stateObs) > 2){
-                        objetivo = buscarPosicionASalvoDeEnemigo(stateObs);
+                    if (nivelDePeligro(avatar, stateObs) > 0){
+                        objetivo = buscarPosicionASalvoDeEnemigo(stateObs, elapsedTimer);
                     }
 
                     nodoConCoste nodoInicial = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), objetivo, stateObs);
-                    caminoRecorrido = calculaCaminoOptimo(nodoInicial);
+                    caminoRecorrido = calculaCaminoOptimoDinamico(nodoInicial, elapsedTimer);
                 }
 
-                return caminoRecorrido.pop();
+                if (!caminoRecorrido.isEmpty())
+                    return caminoRecorrido.pop();
+                else
+                    return Types.ACTIONS.ACTION_NIL;
 
         }
         return null;
