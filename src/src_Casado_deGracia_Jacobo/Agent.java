@@ -188,13 +188,12 @@ public class Agent extends AbstractPlayer {
                 // Dependiendo de esa distancia, a cada casilla le asigno un nivel de peligro.
                 // Las casillas mas peligrosas, obviamente, seran aquellas mas cercanas al enemigo.
                 switch (distancia) {
-
                     case (6):
                         if (nivel == 4)
                             peligro += 1;
                         break;
                     case (5):
-                        peligro += 2;
+                        peligro += 1;
                         break;
                     case (4):
                         peligro += 2;
