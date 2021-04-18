@@ -510,7 +510,7 @@ public class Agent extends AbstractPlayer {
                 // Si esta en abiertos, y ese nodo
                 if (abiertos.contains(nodoI)){
                     nodoConCoste aux = abiertos.ceiling(nodoI);
-                    if ((aux.g + aux.h) > (nodoI.g + nodoI.h) )
+                    if ((nodoI.g + nodoI.h) < (aux.g + aux.h))
                         aux.setPadreNuevo(nodoI.nodoPadre);
                 }
                 // Si por el contrario el nodo a evaluar esta en cerrados, hacemos exactamente lo mismo que el anterior.
@@ -518,7 +518,7 @@ public class Agent extends AbstractPlayer {
                 // Como el algoritmo no sabe donde esta el nodo exactamente, lo separamos en una comprobacion u otra.
                 else if (cerrados.contains(nodoI)){
                     nodoConCoste aux = cerrados.ceiling(nodoI);
-                    if ((aux.g + aux.h) > (nodoI.g + nodoI.h) )
+                    if ((nodoI.g + nodoI.h) < (aux.g + aux.h))
                         aux.setPadreNuevo(nodoI.nodoPadre);
                 }
                 // Si por el contrario el nodo no esta ni en abiertos ni en cerrados, lo insertamos en la lista de abiertos,
@@ -599,14 +599,14 @@ public class Agent extends AbstractPlayer {
                 gemasEscaladas.add(posGema);
             }
 
-            Vector2d posicion_diamante = buscarGemaMasCercanaAPosicion(gemasEscaladas, posicionActual);
-            nodoConCoste buscaDiamante = new nodoConCoste(posicionActual, stateObs.getAvatarOrientation(), posicion_diamante, stateObs);
+            Vector2d posicion_diamante;
+            nodoConCoste buscaDiamante = new nodoConCoste(posicionActual, stateObs.getAvatarOrientation(), posicionActual, stateObs);
 
-            while (gemasObtenidas <  9){
-                buscaDiamante = calculaCaminoOptimoNodo(buscaDiamante);
-                posicionActual = buscaDiamante.posJugador;
+            while (gemasObtenidas < 9){
                 posicion_diamante = buscarGemaMasCercanaAPosicion(gemasEscaladas, posicionActual);
                 buscaDiamante.setDestino(posicion_diamante);
+                buscaDiamante = calculaCaminoOptimoNodo(buscaDiamante);
+                posicionActual = buscaDiamante.posJugador;
                 gemasObtenidas++;
             }
 
@@ -634,7 +634,27 @@ public class Agent extends AbstractPlayer {
                 return caminoRecorrido.pop();
 
             case 2:
+                /*if (caminoRecorrido.isEmpty()){
+
+                    avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
+                            stateObs.getAvatarPosition().y / fescala.y);
+
+                    if (gemasObtenidas == 9){
+                        nodoConCoste caminoHastaSalida = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), pos_Portal, stateObs);
+                        caminoRecorrido = calculaCaminoOptimo(caminoHastaSalida);
+                    }
+
+                    else{
+                        Vector2d posicion_diamante = buscarGemaMasCercana(stateObs);
+                        nodoConCoste buscaDiamante = new nodoConCoste(avatar, stateObs.getAvatarOrientation(), posicion_diamante, stateObs);
+                        caminoRecorrido = calculaCaminoOptimo(buscaDiamante);
+                        gemasObtenidas ++;
+                    }
+
+                }*/
+
                 return caminoRecorrido.pop();
+
 
             case 4:
                 avatar =  new Vector2d(stateObs.getAvatarPosition().x / fescala.x,

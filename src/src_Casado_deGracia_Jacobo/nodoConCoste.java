@@ -42,6 +42,13 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
     int profundidad;
 
 
+    public boolean equals(nodoConCoste n){
+        if(this.posJugador.x == n.posJugador.x && this.posJugador.y == n.posJugador.y)
+            return true;
+        else
+            return false;
+    }
+
     /** CONSTRUCTOR DEL PRIMER NODO (OJO, SOLO EL PRIMERO, YA QUE EL SEGUNDO RECIBE COMO ARGUMENTO SU NODO PADRE).
         @param la posicion del jugador en ese momento, la orientacion y la posicion del siguiente destino como Vector2d, y el estado del juego.
         El constructor inicializa la variable de clase de estado y la de posicionSiguienteDestino, y calcula la orientacion a enumerado
@@ -102,7 +109,7 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
 
     }
     /** Metodo que devuelve un enumerado llamado orientacion a partir de un vector2d de la orientacion del juego.
-    *  @param vectorOrientacion vector de orientacion 2d
+    *  @param El vector de orientacion 2d
     *  @return El enumerado de orientacion correspondiente al vector, teniendo en cuenta de que las casillas van aumentando en unidad conforme vayas
     *          avanzando hacia abajo y hacia la derecha (ya que el 0,0 esta en la esquina superior izquierda).
     * */
@@ -153,7 +160,7 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
 
         Vector2d nuevaPosicion = new Vector2d(posJugador);
 
-        /*switch(accion){
+        switch(accion){
             case ACTION_UP:
                     nuevaPosicion = new Vector2d(posJugador.x, posJugador.y-1);
                     break;
@@ -166,7 +173,7 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
             case ACTION_RIGHT:
                     nuevaPosicion = new Vector2d(posJugador.x + 1, posJugador.y);
                     break;
-        }*/
+        }
 
         this.posJugador = calcularPosicion(posJugador, accion);
     }
