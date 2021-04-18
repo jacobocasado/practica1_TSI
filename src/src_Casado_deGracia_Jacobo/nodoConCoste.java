@@ -34,7 +34,7 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
     float g;
     float h;
     // Necesitamos también almacenar la posición del siguiente destino al que queramos llegar.
-    static Vector2d posSiguienteDestino;
+    Vector2d posSiguienteDestino;
     // Lo necesitamos para saber, más tarde, si el nodo es generable.
     static StateObservation estado;
     // ACTUALIZACION: Se le ha incluido a cada nodo, la profundidad de expansion; util para el A Star con profundidad
@@ -105,7 +105,9 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
         this.accion = accion;
         // Modifico la posicion si puedo y se me permite y posteriormente calculo la distancia Manhattan de la posicion actualizada.
         modificarPosicion(nodoPadre.posJugador, accion);
+        this.posSiguienteDestino = nodoPadre.posSiguienteDestino;
         this.h = distanciaManhattanDesde();
+
 
     }
     /** Metodo que devuelve un enumerado llamado orientacion a partir de un vector2d de la orientacion del juego.
@@ -348,17 +350,32 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
         // QUE EL VALOR HEURISTICO AUMENTASE PERO SIN REALIZAR NINGUN TIPO DE ACCION. INCLUSO QUEDARSE QUIETO ES MUCHO MAS RENTABLE.
 
         else{
-            if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_UP, estado) && (nodoPadre.accion != Types.ACTIONS.ACTION_DOWN))
-                nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_UP));
-            // Hijo ABAJO (DOWN)
-            if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_DOWN, estado) && (nodoPadre.accion != Types.ACTIONS.ACTION_UP))
-                nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_DOWN));
-            // Hijo IZQUIERDA (LEFT)
-            if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_LEFT, estado) && (nodoPadre.accion != Types.ACTIONS.ACTION_RIGHT))
-                nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_LEFT));
-            // Hijo DERECHA (RIGHT)
-            if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_RIGHT, estado) && (nodoPadre.accion != Types.ACTIONS.ACTION_LEFT))
-                nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_RIGHT));
+            if (posSiguienteDestino != nodoPadre.posSiguienteDestino){
+                if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_UP, estado))
+                    nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_UP));
+                // Hijo ABAJO (DOWN)
+                if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_DOWN, estado))
+                    nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_DOWN));
+                // Hijo IZQUIERDA (LEFT)
+                if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_LEFT, estado))
+                    nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_LEFT));
+                // Hijo DERECHA (RIGHT)
+                if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_RIGHT, estado))
+                    nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_RIGHT));
+            }
+            else{
+                if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_UP, estado) && (nodoPadre.accion != Types.ACTIONS.ACTION_DOWN))
+                    nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_UP));
+                // Hijo ABAJO (DOWN)
+                if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_DOWN, estado) && (nodoPadre.accion != Types.ACTIONS.ACTION_UP))
+                    nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_DOWN));
+                // Hijo IZQUIERDA (LEFT)
+                if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_LEFT, estado) && (nodoPadre.accion != Types.ACTIONS.ACTION_RIGHT))
+                    nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_LEFT));
+                // Hijo DERECHA (RIGHT)
+                if (esPosibleMovermeHasta(Types.ACTIONS.ACTION_RIGHT, estado) && (nodoPadre.accion != Types.ACTIONS.ACTION_LEFT))
+                    nodosHijos.add(new nodoConCoste(this, Types.ACTIONS.ACTION_RIGHT));
+            }
         }
     }
 
