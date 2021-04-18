@@ -518,7 +518,7 @@ public class Agent extends AbstractPlayer {
                 // Como el algoritmo no sabe donde esta el nodo exactamente, lo separamos en una comprobacion u otra.
                 else if (cerrados.contains(nodoI)){
                     nodoConCoste aux = cerrados.ceiling(nodoI);
-                    if ((aux.g + aux.h) > (nodoI.g + nodoI.h))
+                    if ((aux.g + aux.h) > (nodoI.g + nodoI.h) )
                         aux.setPadreNuevo(nodoI.nodoPadre);
                 }
                 // Si por el contrario el nodo no esta ni en abiertos ni en cerrados, lo insertamos en la lista de abiertos,

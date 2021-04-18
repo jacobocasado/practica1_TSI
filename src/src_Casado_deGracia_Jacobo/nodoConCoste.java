@@ -102,7 +102,7 @@ public class nodoConCoste implements Comparable<nodoConCoste> {
 
     }
     /** Metodo que devuelve un enumerado llamado orientacion a partir de un vector2d de la orientacion del juego.
-    *  @param El vector de orientacion 2d
+    *  @param vectorOrientacion vector de orientacion 2d
     *  @return El enumerado de orientacion correspondiente al vector, teniendo en cuenta de que las casillas van aumentando en unidad conforme vayas
     *          avanzando hacia abajo y hacia la derecha (ya que el 0,0 esta en la esquina superior izquierda).
     * */
