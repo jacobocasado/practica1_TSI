@@ -15,6 +15,7 @@ import tracks.ArcadeMachine;
 Jacobo Casado de Gracia. Práctica 1 de Técnicas de Sistemas Inteligentes
 */
 
+
 public class Test {
 
     public static void main(String[] args) {
@@ -39,10 +40,11 @@ public class Test {
 		//Game settings
 		boolean visuals = true;
 		int seed = new Random().nextInt();
+		System.out.println(seed);
 
 		// Game and level to play
 		int gameIdx = 11;
-		int levelIdx = 9; // level names from 0 to 4 (game_lvlN.txt).
+		int levelIdx = 2; // level names from 0 to 4 (game_lvlN.txt).
 		String gameName = games[gameIdx][1];
 		String game = games[gameIdx][0];
 		String level1 = game.replace(gameName, gameName + "_lvl" + levelIdx);
